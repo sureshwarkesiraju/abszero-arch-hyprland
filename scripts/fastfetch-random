@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# ==== Fastfetch Random Auto ====
+
+CFG="$HOME/.config/fastfetch/config.jsonc"
+FLAG="$HOME/.config/fastfetch/.reload_flag"
+LOGO_DIR="$HOME/.config/fastfetch/logos"
+
+# Function to pick a new random image and update config
+pick_random_image() {
+    IMG=$(ls "$LOGO_DIR"/* 2>/dev/null | shuf -n 1)
+
+    # Only update if an image exists
+    if [[ -n "$IMG" ]]; then
+        sed -i "s|\"source\": \".*\"|\"source\": \"$IMG\"|" "$CFG"
+    fi
+}
+
+clear
+tput civis   # hide cursor
+
+cleanup() {
+    tput cnorm
+    clear
+}
+trap cleanup INT TERM EXIT
+
+# First random image
+pick_random_image
+fastfetch
+
+while true; do
+    # Check keyboard input (1 char)
+    if read -r -n 1 -t 1 key; then
+        [[ $key == "q" ]] && break
+    fi
+
+    # Reload if flag exists OR config timestamp changed
+    if [[ -f "$FLAG" ]]; then
+        pick_random_image
+        clear
+        fastfetch
+        rm -f "$FLAG"
+    fi
+done
+
