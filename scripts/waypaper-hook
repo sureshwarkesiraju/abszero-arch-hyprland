@@ -1,0 +1,80 @@
+# Read Waypaper's last used wallpaper
+STATE="$HOME/.local/state/waypaper/state.ini"
+
+# CHANGE THIS ↓ (because Waypaper uses "wallpaper =", not "current_wallpaper =")
+IMG=$(grep "^wallpaper" "$STATE" | cut -d= -f2- | sed 's/^[[:space:]]*//')
+
+# ADD THIS ↓ (expand ~ to /home/absolutezero)
+IMG="${IMG/#\~/$HOME}"
+
+# If wallpaper missing, exit
+[ -z "$IMG" ] || [ ! -f "$IMG" ] && exit 0
+
+# Generate Pywal theme
+wal -i "$IMG" -q
+
+# Generate eww calendar colors
+~/.config/eww/scripts/generate-colors.sh
+
+# Reload eww if running
+if pgrep -x eww >/dev/null; then
+    eww reload 2>/dev/null
+fi
+
+#--done--
+
+# Extract Pywal colors
+BG=$(grep background ~/.cache/wal/colors.css | head -n1 | cut -d: -f2 | tr -d ' ;')
+FG=$(grep foreground ~/.cache/wal/colors.css | head -n1 | cut -d: -f2 | tr -d ' ;')
+
+# --- write Hyprland border colors using pywal ---
+HYPR_COLORS="$HOME/.config/hypr/colors.conf"
+
+# remove leading '#' for hex
+BGclean="${BG#"#"}"
+FGclean="${FG#"#"}"
+
+cat > "$HYPR_COLORS" <<EOF
+col.border_active = rgb(0x$BGclean) rgb(0x$FGclean) 45deg
+col.border_inactive = rgb(0x$BGclean)
+EOF
+
+
+hyprctl reload >/dev/null 2>&1
+
+# Make transparent versions (70% and 40% opacity)
+BG70="${BG}b3"   # 70% opacity
+BG40="${BG}66"   # 40% opacity
+
+cat > ~/.config/waypaper/colors.css <<EOF
+window {
+    background-color: $(grep background ~/.cache/wal/colors.css | awk '{print $2}');
+    color: $(grep foreground ~/.cache/wal/colors.css | awk '{print $2}');
+}
+EOF
+
+
+# --- create blurred wallpaper for hyprlock (simple, safe) ---
+HYPRLOCK_DIR="$HOME/.config/hypr/hyprlock"
+HYPRLOCK_OUT="$HYPRLOCK_DIR/wallpaper_blurred.png"
+
+mkdir -p "$HYPRLOCK_DIR"
+
+if [ -n "${IMG:-}" ] && [ -f "$IMG" ]; then
+  # Use ImageMagick convert if available (preferred). Adjust blur (0x20) or resolution if you want.
+  if command -v convert >/dev/null 2>&1; then
+    convert "$IMG" -resize 1920x1080^ -gravity center -extent 1920x1080 -blur 0x20 -quality 85 "$HYPRLOCK_OUT" 2>/dev/null || true
+  elif command -v magick >/dev/null 2>&1; then
+    magick convert "$IMG" -resize 1920x1080^ -gravity center -extent 1920x1080 -blur 0x20 -quality 85 "$HYPRLOCK_OUT" 2>/dev/null || true
+  else
+    # fallback: if you already create a blurred file elsewhere, copy it
+    if [ -f "$HOME/.config/wlogout/images/wallpaper_blurred.png" ]; then
+      cp -f "$HOME/.config/wlogout/images/wallpaper_blurred.png" "$HYPRLOCK_OUT" 2>/dev/null || true
+    fi
+  fi
+  chmod 644 "$HYPRLOCK_OUT" 2>/dev/null || true
+fi
+# --- end hyprlock block ---
+# Reload Kitty
+pkill -USR1 -x kitty 2>/dev/null
+
