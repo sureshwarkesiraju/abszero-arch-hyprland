@@ -1,0 +1,96 @@
+@import "/home/absolutezero/.cache/wal/colors-waybar.css";
+
+* {
+    font-family: JetBrains Mono, "Font Awesome 6 Free", "Font Awesome 6 Brands";
+    font-size: 12px;
+    font-weight: bold;
+}
+
+window#waybar {
+    background-color: transparent;
+    transition-duration: .5s;
+}
+
+#workspaces button {
+    background-color: transparent;
+    padding: 0px 4px;
+    color: @color5;
+    font-weight: 100;
+}
+
+#workspaces button.active {
+    color: @color6;
+}
+
+#clock,
+#battery,
+#network,
+#pulseaudio,
+#custom-mem,
+#temperature,
+#custom-power,
+#custom-os_button {
+    padding: 0 6px;
+    color: @foreground;
+}
+
+.modules-left {
+  margin: 0;
+  background-color: @background;
+  border-radius: 40px;
+}
+
+.modules-center {
+  margin: 0;
+}
+
+.modules-right {
+  margin: 0;
+  background-color: @background;
+  border-radius: 40px;
+}
+
+#custom-os_button {
+    color: @background;
+    font-size: 1.2rem;
+    padding: 0 12px 0 8px;
+    margin: 4px;
+    border-radius: 100px;
+    background-color: @color4;
+}
+
+#custom-power {
+  color: @background;
+  padding: 0 10px;
+  margin: 4px;
+  border-radius: 100px;
+  background-color: @color5;
+}
+
+#custom-power:hover{
+  transition: ease 0.2s all;
+  color: @color5;
+  background-color: @background;
+}
+
+#battery.charging, #battery.plugged {
+    color: #26A65B;
+}
+
+#network.disconnected {
+    color: #f53c3c;
+}
+
+#temperature.critical {
+    color: #eb4d4b;
+}
+
+#scratchpad {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+#custom-mem {
+    margin-right: 6px;
+    margin-left: 6px;
+}
+
