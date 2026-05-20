@@ -1,0 +1,56 @@
+#!/bin/bash
+source "$HOME/.cache/wal/colors.sh"
+
+best=""
+best_score=0
+
+# Find most saturated color (same logic as before)
+for c in "$color1" "$color2" "$color3" "$color4" "$color5" "$color6" "$color7"; do
+    hex=${c#"#"}
+
+    r=$((16#${hex:0:2}))
+    g=$((16#${hex:2:2}))
+    b=$((16#${hex:4:2}))
+
+    max=$(( r>g ? (r>b?r:b) : (g>b?g:b) ))
+    min=$(( r<g ? (r<b?r:b) : (g<b?g:b) ))
+
+    sat=$((max - min))
+
+    if (( sat > best_score )); then
+        best_score=$sat
+        best="$hex"
+    fi
+done
+# ---- BOOST SATURATION ----
+# 100 = original, 120–150 = more vivid
+SAT_BOOST=140
+
+r=$((16#${best:0:2}))
+g=$((16#${best:2:2}))
+b=$((16#${best:4:2}))
+
+# Find max channel
+max=$(( r>g ? (r>b?r:b) : (g>b?g:b) ))
+
+# Boost saturation
+r=$(( max + (r - max) * SAT_BOOST / 100 ))
+g=$(( max + (g - max) * SAT_BOOST / 100 ))
+b=$(( max + (b - max) * SAT_BOOST / 100 ))
+
+# Clamp values (0–255)
+((r<0)) && r=0; ((r>255)) && r=255
+((g<0)) && g=0; ((g>255)) && g=255
+((b<0)) && b=0; ((b>255)) && b=255
+
+# ---- OPTIONAL DARKEN AFTER BOOST ----
+BRIGHTNESS=75   # 100 = full, 70–85 = nice depth
+
+r=$(( r * BRIGHTNESS / 100 ))
+g=$(( g * BRIGHTNESS / 100 ))
+b=$(( b * BRIGHTNESS / 100 ))
+
+printf -v hex "%02x%02x%02x" "$r" "$g" "$b"
+# Apply
+openrgb --device 1 --mode direct --color "$hex"
+openrgb --device 0 --mode direct --color "$hex"
